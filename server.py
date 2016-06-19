@@ -26,6 +26,7 @@ class YTDownloadHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if os.path.exists(sound_path) is False:
             gtts.gTTS(text=text, lang='fr').save(sound_path)
         sonos.play_uri('%s/%s.mp3' % (SCORES_URI, quoted_text))
+        self.send_response(200)
 
 
 if __name__ == '__main__':
