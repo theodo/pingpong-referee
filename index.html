@@ -14,8 +14,8 @@
     <div class="container-fluid" id="game">
       <div class="row">
         <div class="center-block form-inline">
-          <player-name :name="players[0].name"></player-name>
-          <player-name :name="players[1].name"></player-name>
+          <player-name :player="players[0]"></player-name>
+          <player-name :player="players[1]"></player-name>
         </div>
       </div>
       <div class="row">
@@ -42,13 +42,8 @@
       });
 
       var PlayerNameComponent = Vue.extend({
-        props: ['name'],
-        template: '<input type="text" class="form-control col-md-6" v-model="name" v-on:blur="setName()">',
-        methods: {
-          setName: function () {
-            console.log(this.name);
-          }
-        }
+        props: ['player'],
+        template: '<input type="text" class="form-control col-md-6" v-model="player.name">'
       });
 
       var GameEndComponent = Vue.extend({
@@ -61,7 +56,7 @@
         template: '<div v-show="player">{{ message }}</div>',
         computed: {
           won: function () {
-            return this.player.name + " won";
+            return this.player.name + " a gagné";
           }
         },
         watch: {
@@ -93,7 +88,7 @@
             player1.score++;
 
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', Vue.config.vocalServerUrl+this.players[0].score+'/'+this.players[1].score);
+            xhr.open('GET', Vue.config.vocalServerUrl+this.players[0].score+' à '+this.players[1].score);
             xhr.send(null);
 
             if (player1.score >= 11 && player1.score - player2.score >= 2) {
