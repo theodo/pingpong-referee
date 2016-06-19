@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ping Pong Refere</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <style media="screen">
+      #score {
+        font-size: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <form class="col-md-6 col-md-offset-3 form-horizontal" id="game" action="index.html" method="post">
+          <div class="form-group">
+            <label class="control-label col-sm-4" for="player1">First player name</label>
+            <div class="col-sm-8">
+              <input type="text" class="form-control" id="player1" placeholder="name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-4" for="player1">Second player name</label>
+            <div class="col-sm-8">
+              <input type="text" class="form-control" id="player2" placeholder="name">
+            </div>
+          </div>
+          <button type="submit" class="center-block btn btn-lg btn-success">Start game</button>
+        </form>
+
+        <form class="col-md-6 col-md-offset-3 form-horizontal" id="score" action="index.html" method="post">
+          <div class="row">
+            <div class="col-md-3 col-md-offset-3">
+              <div class="playerName" id="player1Name">Benjamin</div>
+              <div id="player1Score">0</div>
+              <button type="submit" class="btn btn-lg btn-success" name="player1">Won</button>
+            </div>
+
+            <div class="col-md-3">
+              <div class="playerName" id="player2Name">Theo</div>
+              <div id="player2Score">0</div>
+              <button type="submit" class="btn btn-lg btn-success" name="player2">Won</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script   src="https://code.jquery.com/jquery-3.0.0.min.js"   integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0="   crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      $(function () {
+        var score = { player1: 0, player2: 0 };
+        var player2Score = 0;
+        var $game = $("#game");
+        var $score = $("#score");
+
+        $score.hide();
+
+        $game.submit(function (event) {
+          event.preventDefault();
+          $score.show();
+          $game.hide();
+          $("#player1Name").text($('#player1').val());
+          $("#player2Name").text($('#player2').val());
+        });
+
+        $('button', $score).click(function (event) {
+          event.preventDefault();
+          var player = event.currentTarget.name;
+
+          score[player] += 1;
+          console.log(score);
+          $("#"+player+"Score").text(score[player]);
+
+          var server = "192.168.10.155:8888/";
+          $.get(server+score.player1+'/'+score.player2);
+        });
+      });
+    </script>
+  </body>
+</html>
