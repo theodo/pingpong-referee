@@ -29,7 +29,7 @@
           <button v-on:click="winPoint(players[1], players[0])" type="submit" class="btn btn-lg btn-success" name="player2">Won</button>
         </div>
       </div>
-      <game-end :player="winner"></game-end>
+      <game-end :winner="winner" :looser="looser"></game-end>
     </div>
 
     <script type="text/javascript" src="https://npmcdn.com/vue@1.0.25/dist/vue.min.js"></script>
@@ -47,20 +47,20 @@
       });
 
       var GameEndComponent = Vue.extend({
-        props: ['player'],
+        props: ['winner', 'looser'],
         data: function () {
           return {
             message: ''
           }
         },
-        template: '<div v-show="player">{{ message }}</div>',
+        template: '<div v-show="winner">{{ message }}</div>',
         computed: {
           won: function () {
-            return this.player.name + " a gagné";
+            return this.winner.name + " a gagné " + this.winner.score + " à " + this.looser.score;
           }
         },
         watch: {
-          player: function (player) {
+          winner: function (player) {
             this.message = this.won;
 
             var xhr = new XMLHttpRequest();
@@ -81,18 +81,20 @@
             { name: "player1", score: 0},
             { name: "player2", score: 0}
           ],
-          winner: null
+          winner: null,
+          looser: null
         },
         methods: {
           winPoint: function (player1, player2) {
             player1.score++;
 
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', Vue.config.vocalServerUrl+this.players[0].score+' à '+this.players[1].score);
-            xhr.send(null);
-
             if (player1.score >= 11 && player1.score - player2.score >= 2) {
               this.winner = player1;
+              this.looser = player2;
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.open('GET', Vue.config.vocalServerUrl+this.players[0].score+' à '+this.players[1].score);
+              xhr.send(null);
             }
           }
         }
