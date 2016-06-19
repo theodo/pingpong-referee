@@ -73,7 +73,7 @@
           console.log(score);
           $("#"+player+"Score").text(score[player]);
 
-          var server = "192.168.10.155:8888/";
+          var server = "http://192.168.10.155:8888/";
           $.get(server+score.player1+'/'+score.player2);
         });
       });

@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 
 import http.server
-import time
 import soco
 
 
+SCORES_URI = 'http://192.168.10.155:8000'
 SERVER_ADDRESS = ('', 8888)
 sonos = soco.discover().pop()
 print(sonos)
-sonos.volume = 100
 
 
 def main():
@@ -18,7 +17,7 @@ def main():
 class YTDownloadHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         scores = self.path.split('/')
-        sonos.play_uri('http://192.168.10.155:8000/%s_%s.mp3' % (scores[1], scores[2]))
+        sonos.play_uri('%s/%s_%s.mp3' % (SCORES_URI, scores[1], scores[2]))
 
 
 if __name__ == '__main__':
