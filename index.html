@@ -13,109 +13,164 @@
   <body>
     <div class="container-fluid" id="game">
       <div class="row">
-        <div class="center-block form-inline">
+        <div class="col-md-3 col-md-offset-3">
           <player-name :player="players[0]"></player-name>
-          <player-name :player="players[1]"></player-name>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-3 col-md-offset-3" id="player1">
-          <score :score="players[0].score"></score>
-          <button v-on:click="winPoint(players[0], players[1])" type="submit" class="btn btn-lg btn-success" name="player1">Won</button>
         </div>
 
         <div class="col-md-3">
-          <score :score="players[1].score"></score>
-          <button v-on:click="winPoint(players[1], players[0])" type="submit" class="btn btn-lg btn-success" name="player2">Won</button>
+          <player-name :player="players[1]"></player-name>
         </div>
       </div>
-      <game-end :winner="winner" :looser="looser"></game-end>
+
+      <div class="row">
+        <div class="col-md-3 col-md-offset-3">
+          <score v-on:winpoint="resetPoint(0)" :player.sync="players[0]" :playerIndex="0"></score>
+          <button v-on:click="winPoint(0)" type="submit" class="btn btn-lg btn-success">Won</button>
+        </div>
+
+        <div class="col-md-3">
+          <score v-on:winpoint="resetPoint(1)" :player.sync="players[1]" :playerIndex="1"></score>
+          <button v-on:click="winPoint(1)" type="submit" class="btn btn-lg btn-success">Won</button>
+        </div>
+      </div>
     </div>
 
     <script type="text/javascript" src="https://npmcdn.com/vue@1.0.25/dist/vue.min.js"></script>
     <script type="text/javascript">
-    Vue.config.vocalServerUrl = "http://192.168.10.155:8888/";
+      Vue.config.vocalServerUrl = "http://192.168.10.137:8888/";
 
       var ScoreComponent = Vue.extend({
-        props: ['score'],
-        template: '<div class="score">{{ score }}</div>'
+        props: ['player'],
+        template: '<input type="text" class="form-control" v-model="player.score" v-on:blur="$emit(\'winpoint\')"/>'
       });
 
       var PlayerNameComponent = Vue.extend({
         props: ['player'],
-        template: '<input type="text" class="form-control col-md-6" v-model="player.name">'
-      });
-
-      var GameEndComponent = Vue.extend({
-        props: ['winner', 'looser'],
-        data: function () {
-          return {
-            message: ''
-          }
-        },
-        template: '<div v-show="winner">{{ message }}</div>',
-        computed: {
-          won: function () {
-            return this.winner.name + " a gagné " + this.winner.score + " à " + this.looser.score + ".";
-          }
-        },
-        watch: {
-          winner: function (player) {
-            this.message = this.won;
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', Vue.config.vocalServerUrl+this.message);
-            xhr.send(null);
-          }
-        }
+        template: '<input type="text" class="form-control" v-model="player.name" />'
       });
 
       Vue.component('score', ScoreComponent);
       Vue.component('player-name', PlayerNameComponent);
-      Vue.component('game-end', GameEndComponent);
 
       new Vue({
         el: '#game',
         data: {
           players : [
-            { name: "player1", score: 0},
-            { name: "player2", score: 0}
+            { name: 'Joueur 1', score: 0, pointsInARow: 0, previousScore: 0 },
+            { name: 'Joueur 2', score: 0, pointsInARow: 0, previousScore: 0 }
           ],
-          winner: null,
-          looser: null,
           server: null,
           returner: null,
-          turn: 0
+          turn: 0,
+          taunts: [
+            "",
+            "Incroyable, quel point!",
+            "Bravo !",
+            "Superbe !",
+            "Phénoménal !",
+            "Quel joueur !",
+            "C'est une leçon de poing pong!",
+            "C'est un standard de faire autant de fautes?",
+            "lol..."
+          ],
+          copyTaunts: []
         },
         methods: {
-          winPoint: function (player1, player2) {
+          winPoint: function (playerIndex) {
+            var player1 = this.players[playerIndex];
+            var player2 = this.players[playerIndex == 0 ? 1 : 0];
+
             this.turn++;
+
+            player1.pointsInARow++;
+            player1.previousScore = player1.score;
             player1.score++;
 
-            if (player1.score >= 11 && player1.score - player2.score >= 2) {
-              this.winner = player1;
-              this.looser = player2;
-            } else {
-              var message = this.server.score + ' à ' + this.returner.score + ".";
-              if (this.turn > 1 && this.turn % 2 == 0) {
-                this.changeServer();
-                message = message + 'A ' + this.server.name + ' de servir.';
-              }
+            player2.pointsInARow = 0;
 
-              var xhr = new XMLHttpRequest();
-              xhr.open('GET', Vue.config.vocalServerUrl + message);
-              xhr.send(null);
+            this.updateGame(player1, player2);
+          },
+          resetPoint: function (playerIndex) {
+            var player1 = this.players[playerIndex];
+            var player2 = this.players[playerIndex == 0 ? 1 : 0];
+
+            this.turn = player1.score + player2.score;
+
+            this.updateGame(player1, player2);
+          },
+          updateGame: function (player1, player2) {
+            var messages = [];
+
+            messages.push(this.taunt(player1, player2));
+
+            if (this.isEndOfMatch(player1.score, player2.score)) {
+              messages.push(player1.name + " a gagné " + player1.score + " à " + player2.score + ".");
+
+              this.resetGame();
+
+              messages.push("On en fait une autre?");
+
+              return this.say(messages.join('\n'));
             }
+
+            if (this.isMatchPoint(player1.score, player2.score)) {
+              messages.push("Balle de match " + player1.name + ".");
+            } else if (player1.score == player2.score) {
+              messages.push(this.server.score + ' partout.');
+            } else {
+              messages.push(this.server.score + ' à ' + this.returner.score + ".");
+            }
+
+            if (this.shouldServerChange()) {
+              this.changeServer();
+              messages.push('A ' + this.server.name + ' de servir.');
+            }
+
+            this.say(messages.join('\n'));
+          },
+          resetGame: function () {
+            this.players[0].score = 0;
+            this.players[0].pointsInARow = 0;
+            this.players[1].score = 0;
+            this.players[1].pointsInARow = 0;
+
+            this.taunts = this.copyTaunts.slice();
+          },
+          taunt: function (player1, player2) {
+            var messages = [];
+            var messageIndex = null;
+
+            if (player1.pointsInARow > 2 && player1.pointsInARow < 9) {
+              messageIndex = Math.floor(Math.random() * this.taunts.length) + 1;
+              messages = this.taunts.splice(messageIndex, 1);
+            }
+
+            return messages.join('\n');
+          },
+          shouldServerChange: function () {
+            return this.turn > 1 && this.turn % 2 == 0
+          },
+          isEndOfMatch: function (score1, score2) {
+            return score1 >= 11 && score1 - score2 >= 2;
+          },
+          isMatchPoint: function (score1, score2) {
+            return score1 >= 10 && score1 - score2 >= 1;
           },
           changeServer: function () {
-            var server = this.returner;
-            this.returner = this.server;
-            this.server = server;
+            [this.returner, this.server] = [this.server, this.returner];
+          },
+          say: function (message) {
+            console.log(message);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', Vue.config.vocalServerUrl + message);
+            xhr.send(null);
           }
         },
         ready: function () {
           this.server = this.players[0];
           this.returner = this.players[1];
+          this.copyTaunts = this.taunts.slice();
         }
       });
     </script>
