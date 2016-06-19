@@ -11,4 +11,5 @@ Install the dependencies: `pip3 install -r requirements.txt`
 ## Launch
 
 In the sounds directory: `python3 -m http.server <port>`
+
 In the main directory: `./server.py`
