@@ -56,7 +56,7 @@
         template: '<div v-show="winner">{{ message }}</div>',
         computed: {
           won: function () {
-            return this.winner.name + " a gagné " + this.winner.score + " à " + this.looser.score;
+            return this.winner.name + " a gagné " + this.winner.score + " à " + this.looser.score + ".";
           }
         },
         watch: {
@@ -82,21 +82,40 @@
             { name: "player2", score: 0}
           ],
           winner: null,
-          looser: null
+          looser: null,
+          server: null,
+          returner: null,
+          turn: 0
         },
         methods: {
           winPoint: function (player1, player2) {
+            this.turn++;
             player1.score++;
 
             if (player1.score >= 11 && player1.score - player2.score >= 2) {
               this.winner = player1;
               this.looser = player2;
             } else {
+              var message = this.server.score + ' à ' + this.returner.score + ".";
+              if (this.turn > 1 && this.turn % 2 == 0) {
+                this.changeServer();
+                message = message + 'A ' + this.server.name + ' de servir.';
+              }
+
               var xhr = new XMLHttpRequest();
-              xhr.open('GET', Vue.config.vocalServerUrl+this.players[0].score+' à '+this.players[1].score);
+              xhr.open('GET', Vue.config.vocalServerUrl + message);
               xhr.send(null);
             }
+          },
+          changeServer: function () {
+            var server = this.returner;
+            this.returner = this.server;
+            this.server = server;
           }
+        },
+        ready: function () {
+          this.server = this.players[0];
+          this.returner = this.players[1];
         }
       });
     </script>
